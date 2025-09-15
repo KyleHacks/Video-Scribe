@@ -2,29 +2,9 @@ import streamlit as st
 import openai
 import tempfile
 import os
-import sys
 from dotenv import load_dotenv
-
-# Diagnostic logging for debugging
-st.write(f"🐍 Python version: {sys.version}")
-st.write(f"🐍 Python version info: {sys.version_info}")
-
-try:
-    import audioop
-    st.write("✅ audioop module is available")
-except ImportError as e:
-    st.write(f"❌ audioop module not found: {e}")
-
-try:
-    from pydub import AudioSegment
-    from pydub.silence import split_on_silence
-    import pydub
-    st.write(f"✅ pydub version: {pydub.__version__}")
-    st.write("✅ pydub imported successfully")
-except ImportError as e:
-    st.write(f"❌ pydub import failed: {e}")
-    st.stop()
-
+from pydub import AudioSegment
+from pydub.silence import split_on_silence
 import math
 
 # Load .env file
