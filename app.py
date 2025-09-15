@@ -3,9 +3,17 @@ import openai
 import tempfile
 import os
 from dotenv import load_dotenv
-from pydub import AudioSegment
-from pydub.silence import split_on_silence
 import math
+
+# Try to import pydub with fallback handling
+try:
+    from pydub import AudioSegment
+    from pydub.silence import split_on_silence
+    PYDUB_AVAILABLE = True
+except ImportError as e:
+    st.error(f"❌ Audio processing unavailable: {e}")
+    st.error("💡 This may be due to Python 3.13 compatibility issues. Please ensure you have the latest pydub version and ffmpeg installed.")
+    PYDUB_AVAILABLE = False
 
 # Load .env file
 load_dotenv()
@@ -16,6 +24,10 @@ BACKEND_OPENAI_KEY = os.getenv("OPENAI_API_KEY")
 
 def remove_silence_from_audio(audio_path, output_path):
     """Remove silence from audio file and save as MP3"""
+    if not PYDUB_AVAILABLE:
+        st.warning("⚠️ Audio condensing unavailable - pydub not working. Using original file.")
+        return audio_path
+        
     try:
         # Load audio file
         audio = AudioSegment.from_file(audio_path)
@@ -42,6 +54,10 @@ def remove_silence_from_audio(audio_path, output_path):
 
 def segment_audio(audio_path, segment_duration_minutes):
     """Split audio into segments of specified duration"""
+    if not PYDUB_AVAILABLE:
+        st.warning("⚠️ Audio segmentation unavailable - pydub not working. Processing full file.")
+        return []
+        
     try:
         audio = AudioSegment.from_file(audio_path)
         segment_length_ms = segment_duration_minutes * 60 * 1000  # Convert to milliseconds
@@ -91,11 +107,17 @@ col1, col2 = st.columns(2)
 
 with col1:
     condensed_audio = st.checkbox("🎵 Condensed Audio",
-                                 help="Remove silence from audio to reduce file size and processing time")
+                                 help="Remove silence from audio to reduce file size and processing time",
+                                 disabled=not PYDUB_AVAILABLE)
+    if not PYDUB_AVAILABLE and condensed_audio:
+        st.warning("⚠️ Audio condensing requires pydub - feature disabled")
 
 with col2:
     enable_segmentation = st.checkbox("✂️ Enable Segmentation",
-                                     help="Process large files in smaller segments")
+                                     help="Process large files in smaller segments",
+                                     disabled=not PYDUB_AVAILABLE)
+    if not PYDUB_AVAILABLE and enable_segmentation:
+        st.warning("⚠️ Audio segmentation requires pydub - feature disabled")
 
 if enable_segmentation:
     segment_duration = st.slider("Segment Duration (minutes)",
